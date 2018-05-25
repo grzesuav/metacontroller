@@ -64,10 +64,12 @@ type parentController struct {
 	updateStrategy updateStrategyMap
 	childInformers common.InformerMap
 
+	poster common.Poster
+
 	finalizer *finalizer.Manager
 }
 
-func newParentController(resources *dynamicdiscovery.ResourceMap, dynClient *dynamicclientset.Clientset, dynInformers *dynamicinformer.SharedInformerFactory, mcClient mcclientset.Interface, revisionLister mclisters.ControllerRevisionLister, cc *v1alpha1.CompositeController) (pc *parentController, newErr error) {
+func newParentController(resources *dynamicdiscovery.ResourceMap, dynClient *dynamicclientset.Clientset, dynInformers *dynamicinformer.SharedInformerFactory, mcClient mcclientset.Interface, revisionLister mclisters.ControllerRevisionLister, cc *v1alpha1.CompositeController, poster common.Poster) (pc *parentController, newErr error) {
 	// Make a dynamic client for the parent resource.
 	parentClient, err := dynClient.Resource(cc.Spec.ParentResource.APIVersion, cc.Spec.ParentResource.Resource)
 	if err != nil {
@@ -118,6 +120,7 @@ func newParentController(resources *dynamicdiscovery.ResourceMap, dynClient *dyn
 		revisionLister: revisionLister,
 		updateStrategy: updateStrategy,
 		queue:          workqueue.NewNamedRateLimitingQueue(workqueue.DefaultControllerRateLimiter(), "CompositeController-"+cc.Name),
+		poster:         poster,
 		finalizer: &finalizer.Manager{
 			Name:    "metacontroller.io/compositecontroller-" + cc.Name,
 			Enabled: cc.Spec.Hooks.Finalize != nil,

@@ -47,7 +47,7 @@ type SyncHookResponse struct {
 	Finalized bool `json:"finalized"`
 }
 
-func (c *decoratorController) callSyncHook(request *SyncHookRequest) (*SyncHookResponse, error) {
+func (c *decoratorController, poster common.Poster) callSyncHook(request *SyncHookRequest) (*SyncHookResponse, error) {
 	if c.dc.Spec.Hooks == nil {
 		return nil, fmt.Errorf("no hooks defined")
 	}
@@ -66,7 +66,7 @@ func (c *decoratorController) callSyncHook(request *SyncHookRequest) (*SyncHookR
 		(request.Object.GetDeletionTimestamp() != nil || !c.parentSelector.Matches(request.Object)) {
 		// Finalize
 		request.Finalizing = true
-		if err := hooks.Call(c.dc.Spec.Hooks.Finalize, request, &response); err != nil {
+		if err := hooks.Call(c.dc.Spec.Hooks.Finalize, poster, request, &response); err != nil {
 			return nil, fmt.Errorf("finalize hook failed: %v", err)
 		}
 	} else {
@@ -76,7 +76,7 @@ func (c *decoratorController) callSyncHook(request *SyncHookRequest) (*SyncHookR
 			return nil, fmt.Errorf("sync hook not defined")
 		}
 
-		if err := hooks.Call(c.dc.Spec.Hooks.Sync, request, &response); err != nil {
+		if err := hooks.Call(c.dc.Spec.Hooks.Sync, poster, request, &response); err != nil {
 			return nil, fmt.Errorf("sync hook failed: %v", err)
 		}
 	}

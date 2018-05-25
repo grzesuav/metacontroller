@@ -45,7 +45,7 @@ type SyncHookResponse struct {
 	Finalized bool `json:"finalized"`
 }
 
-func callSyncHook(cc *v1alpha1.CompositeController, request *SyncHookRequest) (*SyncHookResponse, error) {
+func callSyncHook(cc *v1alpha1.CompositeController, poster common.Poster, request *SyncHookRequest) (*SyncHookResponse, error) {
 	if cc.Spec.Hooks == nil {
 		return nil, fmt.Errorf("no hooks defined")
 	}
@@ -58,7 +58,7 @@ func callSyncHook(cc *v1alpha1.CompositeController, request *SyncHookRequest) (*
 	if request.Parent.GetDeletionTimestamp() != nil && cc.Spec.Hooks.Finalize != nil {
 		// Finalize
 		request.Finalizing = true
-		if err := hooks.Call(cc.Spec.Hooks.Finalize, request, &response); err != nil {
+		if err := hooks.Call(cc.Spec.Hooks.Finalize,  poster, request, &response); err != nil {
 			return nil, fmt.Errorf("finalize hook failed: %v", err)
 		}
 	} else {
@@ -68,7 +68,7 @@ func callSyncHook(cc *v1alpha1.CompositeController, request *SyncHookRequest) (*
 			return nil, fmt.Errorf("sync hook not defined")
 		}
 
-		if err := hooks.Call(cc.Spec.Hooks.Sync, request, &response); err != nil {
+		if err := hooks.Call(cc.Spec.Hooks.Sync, poster, request, &response); err != nil {
 			return nil, fmt.Errorf("sync hook failed: %v", err)
 		}
 	}

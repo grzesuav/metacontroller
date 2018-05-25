@@ -85,7 +85,7 @@ func (pc *parentController) syncRevisions(parent *unstructured.Unstructured, obs
 			Parent:     parent,
 			Children:   observedChildren,
 		}
-		syncResult, err := callSyncHook(pc.cc, syncRequest)
+		syncResult, err := callSyncHook(pc.cc, pc.poster, syncRequest)
 		if err != nil {
 			return nil, fmt.Errorf("sync hook failed for %v %v/%v: %v", pc.parentResource.Kind, parent.GetNamespace(), parent.GetName(), err)
 		}
@@ -155,7 +155,7 @@ func (pc *parentController) syncRevisions(parent *unstructured.Unstructured, obs
 				Parent:     pr.parent,
 				Children:   observedChildren,
 			}
-			syncResult, err := callSyncHook(pc.cc, syncRequest)
+			syncResult, err := callSyncHook(pc.cc, pc.poster, syncRequest)
 			if err != nil {
 				pr.syncError = err
 				return

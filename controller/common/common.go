@@ -18,6 +18,8 @@ package common
 
 import (
 	"fmt"
+	"io"
+	"net/http"
 	"strings"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -183,4 +185,8 @@ func (m InformerMap) Get(apiVersion, resource string) *dynamicinformer.ResourceI
 
 func informerMapKey(apiVersion, resource string) string {
 	return fmt.Sprintf("%s.%s", resource, apiVersion)
+}
+
+type Poster interface {
+	Post(url string, contentType string, body io.Reader) (resp *http.Response, err error)
 }

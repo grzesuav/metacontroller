@@ -17,8 +17,11 @@ limitations under the License.
 package main
 
 import (
+	"crypto/tls"
+	"crypto/x509"
 	"context"
 	"flag"
+	"io/ioutil"
 	"net/http"
 	"os"
 	"os/signal"
@@ -45,6 +48,7 @@ var (
 	clientConfigPath  = flag.String("client-config-path", "", "Path to kubeconfig file (same format as used by kubectl); if not specified, use in-cluster config")
 	clientGoQPS       = flag.Float64("client-go-qps", 5, "Number of queries per second client-go is allowed to make (default 5)")
 	clientGoBurst     = flag.Int("client-go-burst", 10, "Allowed burst queries for client-go (default 10)")
+	caFile            = flag.String("ca", "", "Verify certificates of TLS-enabled secure servers using this CA bundle")
 )
 
 func main() {
@@ -71,6 +75,8 @@ func main() {
 	config.QPS = float32(*clientGoQPS)
 	config.Burst = *clientGoBurst
 
+	httpClient := createHTTPClient(*caFile)
+
 	stopServer, err := server.Start(config, *discoveryInterval, *informerRelist)
 	if err != nil {
 		glog.Fatal(err)
@@ -94,4 +100,33 @@ func main() {
 
 	stopServer()
 	srv.Shutdown(context.Background())
+}
+
+// Create HTTP client, optionally adding a custom CA
+func createHTTPClient(ca string) *http.Client {
+	httpClient := &http.Client{Timeout: 10 * time.Second}
+	if ca != "" {
+		data, err := ioutil.ReadFile(ca)
+		if err != nil {
+			glog.Fatalf("Can't read CA file %s: %v", ca, err)
+		}
+
+		// an error is okay here, we willl only use the custom CA
+		rootCAs, _ := x509.SystemCertPool()
+		if rootCAs == nil {
+			rootCAs = x509.NewCertPool()
+		}
+
+		if ok := rootCAs.AppendCertsFromPEM(data); !ok {
+			glog.Fatalf("Failed to add CA from %s: %v", ca, err)
+		}
+
+		httpClient.Transport = &http.Transport{
+			TLSClientConfig: &tls.Config{
+				RootCAs: rootCAs,
+			},
+		}
+	}
+
+	return httpClient
 }

@@ -20,6 +20,7 @@ import (
 	"fmt"
 
 	"metacontroller.io/apis/metacontroller/v1alpha1"
+	"metacontroller.io/controller/common"
 )
 
 func Call(hook *v1alpha1.Hook, poster common.Poster, request interface{}, response interface{}) error {

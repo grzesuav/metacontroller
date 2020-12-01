@@ -17,9 +17,9 @@ limitations under the License.
 package main
 
 import (
+	"context"
 	"crypto/tls"
 	"crypto/x509"
-	"context"
 	"flag"
 	"io/ioutil"
 	"net/http"
@@ -48,7 +48,7 @@ var (
 	clientConfigPath  = flag.String("client-config-path", "", "Path to kubeconfig file (same format as used by kubectl); if not specified, use in-cluster config")
 	clientGoQPS       = flag.Float64("client-go-qps", 5, "Number of queries per second client-go is allowed to make (default 5)")
 	clientGoBurst     = flag.Int("client-go-burst", 10, "Allowed burst queries for client-go (default 10)")
-	caFile            = flag.String("ca", "", "Verify certificates of TLS-enabled secure servers using this CA bundle")
+	caFile            = flag.String("ca-bundle-file", "", "Verify certificates of TLS-enabled secure servers using this CA bundle")
 )
 
 func main() {
@@ -111,9 +111,9 @@ func createHTTPClient(ca string) *http.Client {
 			glog.Fatalf("Can't read CA file %s: %v", ca, err)
 		}
 
-		// an error is okay here, we willl only use the custom CA
-		rootCAs, _ := x509.SystemCertPool()
-		if rootCAs == nil {
+		// an error is okay here, we will only use the custom CA
+		rootCAs, err := x509.SystemCertPool()
+		if err != nil || rootCAs == nil {
 			rootCAs = x509.NewCertPool()
 		}
 
